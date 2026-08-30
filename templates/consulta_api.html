@@ -1,0 +1,94 @@
+<div class="mb-3 text-center">
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="tipo_doc" id="radioDNI" value="dni" checked onchange="cambiarTipoDoc()">
+        <label class="form-check-label fw-bold" for="radioDNI">DNI</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="tipo_doc" id="radioRUC" value="ruc" onchange="cambiarTipoDoc()">
+        <label class="form-check-label fw-bold" for="radioRUC">RUC</label>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label for="documento" class="fw-bold" id="labelDocumento">Número de DNI</label>
+    <div class="input-group">
+        <input type="text" class="form-control" id="documento" name="documento" placeholder="Ingresa DNI (8 dígitos)" required maxlength="8">
+        <button class="btn btn-dark" type="button" id="btnBuscar" onclick="buscarDatos()">
+            Buscar <span id="spinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+        </button>
+    </div>
+    <small class="text-muted" style="font-size: 0.8em;">Presiona buscar para autocompletar tus datos.</small>
+</div>
+
+<script>
+    // Función para cambiar entre DNI y RUC dinámicamente
+    function cambiarTipoDoc() {
+        const esDni = document.getElementById('radioDNI').checked;
+        
+        // Cambiar títulos y tamaño del campo
+        document.getElementById('labelDocumento').innerText = esDni ? 'Número de DNI' : 'Número de RUC';
+        document.getElementById('documento').placeholder = esDni ? 'Ingresa DNI (8 dígitos)' : 'Ingresa RUC (11 dígitos)';
+        document.getElementById('documento').maxLength = esDni ? 8 : 11;
+        document.getElementById('documento').value = ''; // Limpiar campo
+        
+        // Mostrar/Ocultar los bloques de inputs en registro.html
+        document.getElementById('campos_dni').style.display = esDni ? 'block' : 'none';
+        document.getElementById('campos_ruc').style.display = esDni ? 'none' : 'block';
+        
+        // Deshabilitar los campos ocultos para que el formulario no pida llenarlos
+        document.getElementById('nombres').disabled = !esDni;
+        document.getElementById('apellido_paterno').disabled = !esDni;
+        document.getElementById('apellido_materno').disabled = !esDni;
+        document.getElementById('razon_social').disabled = esDni;
+    }
+
+    // Función que consulta a NUESTRA API (Python) adaptada a Decolecta
+    // Función que consulta a NUESTRA API (Python)
+    // Función que consulta a NUESTRA API (Python)
+    async function buscarDatos() {
+        const esDni = document.getElementById('radioDNI').checked;
+        const documento = document.getElementById('documento').value;
+        const spinner = document.getElementById('spinner');
+        
+        if (esDni && documento.length !== 8) return alert("El DNI debe tener 8 dígitos.");
+        if (!esDni && documento.length !== 11) return alert("El RUC debe tener 11 dígitos.");
+
+        spinner.classList.remove('d-none');
+        
+        const tipo = esDni ? 'dni' : 'ruc';
+        const url = `/api/consultar?tipo=${tipo}&numero=${documento}`;
+
+        try {
+            const respuesta = await fetch(url);
+            
+            if (!respuesta.ok && respuesta.status === 500) {
+                throw new Error("Error interno en tu archivo app.py. Revisa la terminal.");
+            }
+
+            const datos = await respuesta.json();
+
+            if (datos.error) throw new Error(datos.error);
+            
+            const resultado = datos.data ? datos.data : datos;
+            
+            // ¡AQUÍ ESTÁ LA MAGIA! Mapeamos las variables en inglés a nuestros inputs
+            if (esDni) {
+                document.getElementById('nombres').value = resultado.first_name || '';
+                document.getElementById('apellido_paterno').value = resultado.first_last_name || '';
+                document.getElementById('apellido_materno').value = resultado.second_last_name || '';
+            } else {
+                // Agrego 'company_name' por si la consulta de RUC también viene en inglés
+                document.getElementById('razon_social').value = resultado.company_name || resultado.razon_social || resultado.razonSocial || '';
+            }
+            
+        } catch (error) {
+            console.error("Detalle del error:", error);
+            alert(error.message || "Error al buscar el documento. Revisa la consola.");
+        } finally {
+            spinner.classList.add('d-none');
+        }
+    }
+
+    // Ejecutar al cargar la página para configurar la vista por defecto (DNI)
+    document.addEventListener("DOMContentLoaded", cambiarTipoDoc);
+</script>

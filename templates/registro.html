@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <div class="card shadow mt-4">
+            <div class="card-header bg-success text-white text-center">
+                <h4>Crea tu cuenta</h4>
+            </div>
+            <div class="card-body p-4">
+                <form action="/registro" method="POST">
+                    
+                    {% include 'consulta_api.html' %}
+
+                    <div id="campos_dni">
+                        <div class="mb-3">
+                            <label class="fw-bold text-secondary">Nombres</label>
+                            <input type="text" name="nombres" id="nombres" class="form-control bg-light" required readonly>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <label class="fw-bold text-secondary">A. Paterno</label>
+                                <input type="text" name="apellido_paterno" id="apellido_paterno" class="form-control bg-light" required readonly>
+                            </div>
+                            <div class="col-6">
+                                <label class="fw-bold text-secondary">A. Materno</label>
+                                <input type="text" name="apellido_materno" id="apellido_materno" class="form-control bg-light" required readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="campos_ruc" style="display: none;">
+                        <div class="mb-3">
+                            <label class="fw-bold text-secondary">Razón Social</label>
+                            <input type="text" name="razon_social" id="razon_social" class="form-control bg-light" required readonly>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+
+                    <div class="mb-3">
+                        <label>Correo Electrónico</label>
+                        <input type="email" name="correo" class="form-control" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="telefono" class="form-label">Teléfono / Celular</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">+51</span>
+                            <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="999 888 777" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label>Contraseña</label>
+                        <input type="password" name="clave" class="form-control" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">Registrarme</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
