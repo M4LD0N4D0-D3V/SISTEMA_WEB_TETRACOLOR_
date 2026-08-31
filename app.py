@@ -20,7 +20,7 @@ app.secret_key = "clave_secreta_segura"
 def verificar_seguridad_ip(ip):
     """Verifica en la BD si una IP sigue bloqueada."""
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     ahora = datetime.now()
     try:
         cursor.execute("SELECT intentos, bloqueado_hasta FROM registro_seguridad WHERE ip = %s", (ip,))
@@ -46,7 +46,7 @@ def verificar_seguridad_ip(ip):
 def registrar_fallo_ip(ip, correo):
     """Registra un fallo en la BD, guarda el correo usado y bloquea si llega al límite."""
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     ahora = datetime.now()
     bloqueado_ahora = False
     MAX_INTENTOS = 3
@@ -372,7 +372,7 @@ def login():
         clave = request.form['clave']
 
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT * FROM usuario WHERE correo = %s", (correo,))
         usuario = cursor.fetchone()
         conn.close()
@@ -395,7 +395,7 @@ def login():
                 flash(f"Has superado el límite de {MAX_INTENTOS} intentos permitidos. Tu IP ha sido bloqueada por {MINUTOS_BLOQUEO} minutos.", "danger")
             else:
                 conn = get_connection()
-                cursor = conn.cursor(dictionary=True)
+                cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
                 cursor.execute("SELECT intentos FROM registro_seguridad WHERE ip = %s", (ip_cliente,))
                 registro = cursor.fetchone()
                 conn.close()
@@ -434,7 +434,7 @@ def admin_login():
         clave = request.form["clave"]
         
         conn = get_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute("SELECT * FROM usuarios_sistema WHERE correo = %s", (correo,))
         admin = cursor.fetchone()
         conn.close()
@@ -468,7 +468,7 @@ def admin_login():
 @admin_required
 def pedidos():
     conn = get_connection() 
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     
     # 1. Traer Pedidos principales (¡AHORA INCLUYE PRECIO UNITARIO Y ADELANTO!)
     cursor.execute("""
@@ -476,7 +476,7 @@ def pedidos():
                c.telefono AS telefono, pr.nombre_producto AS producto, 
                p.cantidad, p.especificaciones, pr.precio AS precio_unitario,
                (p.cantidad * pr.precio) AS total_pagado, 
-               IFNULL(p.adelanto, 0) AS adelanto,
+               COALESCE(p.adelanto, 0) AS adelanto,
                p.archivo_diseno, p.estado, p.fecha 
         FROM pedido p
         LEFT JOIN usuarios_sistema us ON p.id_usuario_sistema = us.id
@@ -520,14 +520,14 @@ def pedidos():
 def mis_pedidos():
     usuario_id = session.get('usuario_id')
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
         # 1. Traer Pedidos del Cliente (AHORA INCLUYE PRECIO UNITARIO Y ADELANTO)
         cursor.execute("""
             SELECT p.id, pr.nombre_producto AS producto, p.especificaciones, p.cantidad, 
                    pr.precio AS precio_unitario,
                    (p.cantidad * pr.precio) AS total_pagado, 
-                   IFNULL(p.adelanto, 0) AS adelanto,
+                   COALESCE(p.adelanto, 0) AS adelanto,
                    p.archivo_diseno, p.estado, p.fecha 
             FROM pedido p
             JOIN producto pr ON p.id_producto = pr.id
@@ -602,7 +602,7 @@ def cambiar_estado(id, nuevo_estado):
 @admin_required
 def historial_cliente(id_usuario):
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     query = """
         SELECT p.*, prod.nombre_producto, u.nombre as nombre_cliente
         FROM pedido p
@@ -628,7 +628,7 @@ def historial_cliente(id_usuario):
 def admin_seguridad():
     """Muestra el reporte de IPs bloqueadas e intentos de hackeo o fallos."""
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
         cursor.execute("SELECT * FROM registro_seguridad WHERE intentos > 0 ORDER BY ultima_actividad DESC")
         reportes = cursor.fetchall()
@@ -687,7 +687,7 @@ def actualizar_pago(pedido_id):
 def productos():
     # Usamos SQL directo para que lea la nueva columna 'estado'
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
         cursor.execute("SELECT id, nombre_producto, precio, estado FROM producto ORDER BY id DESC")
         lista_productos = cursor.fetchall()
@@ -730,7 +730,7 @@ def editar_producto(id):
 @admin_required
 def cambiar_estado_producto(id):
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     try:
         # Buscamos el estado actual del producto
         cursor.execute("SELECT estado FROM producto WHERE id = %s", (id,))
@@ -789,7 +789,7 @@ def eliminar_producto(id):
 @admin_required
 def clientes():
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True) 
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) 
     try:
         # ¡AQUÍ ESTÁ EL CAMBIO! Añadimos "estado" al SELECT
         cursor.execute("SELECT id, nombre, documento, correo, telefono, estado FROM usuario ORDER BY id DESC")
