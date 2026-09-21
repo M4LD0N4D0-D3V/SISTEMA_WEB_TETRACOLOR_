@@ -14,6 +14,7 @@ import os
 import time
 from flask import request, redirect, flash, session, url_for, render_template
 from werkzeug.utils import secure_filename
+from db import db, Usuario, TipoDocumento
 
 app = Flask(__name__)
 app.secret_key = "clave_secreta_segura"
@@ -257,7 +258,6 @@ def pedido_exitoso(id):
 def registro():
     ip_cliente = request.remote_addr
     
-    # Si la IP está bloqueada por sospecha de hackeo, no puede registrar cuentas
     permitido, tiempo_restante = verificar_seguridad_ip(ip_cliente)
     if not permitido:
         flash(f"Acceso restringido. No puedes registrar cuentas en este momento. Espera {tiempo_restante} segundos.", "danger")
@@ -265,10 +265,13 @@ def registro():
 
     if request.method == 'POST':
         documento = request.form["documento"]
-        tipo_doc = request.form.get("tipo_doc", "dni") # Capturamos el tipo de documento
+        tipo_doc_str = request.form.get("tipo_doc", "dni")
         
-        # LÓGICA DE NOMBRE: Si es RUC usa Razón Social, para cualquier otro tipo (DNI, CE, Pasaporte) construye con nombres y apellidos
-        if tipo_doc.lower() == "ruc":
+        # BUSCAR EL ID NUMÉRICO EN LA BD
+        tipo_doc_obj = TipoDocumento.query.filter(TipoDocumento.nombre.ilike(tipo_doc_str)).first()
+        id_tipo_documento = tipo_doc_obj.id if tipo_doc_obj else 1
+
+        if tipo_doc_str.lower() == "ruc":
             nombre_completo = request.form.get("razon_social", "")
         else:
             nombres = request.form.get("nombres", "")
@@ -279,10 +282,12 @@ def registro():
         telefono = request.form["telefono"]
         correo = request.form["correo"]
         clave = request.form["clave"]
+        domicilio = request.form.get("domicilio", "")
         
-        # ==========================================
-        # VALIDACIONES ESTRICTAS DE FORMATO
-        # ==========================================
+        departamento = request.form.get("departamento")
+        provincia = request.form.get("provincia")
+        distrito = request.form.get("distrito")
+
         if not re.match(r'^\d{9}$', telefono):
             flash("El número de celular debe tener exactamente 9 dígitos numéricos.", "danger")
             return redirect(url_for("registro"))
@@ -291,21 +296,23 @@ def registro():
             flash("El formato del correo electrónico no es válido.", "danger")
             return redirect(url_for("registro"))
         
-        # Validar duplicados
         if Usuario.query.filter_by(correo=correo).first() or Usuario.query.filter_by(documento=documento).first():
             flash("El correo o el documento ya están registrados.", "danger")
             return redirect(url_for("registro"))
             
         pw_hash = bcrypt.generate_password_hash(clave).decode('utf-8')
         
-        # Guardamos en la base de datos pasando 'tipo_documento'
         nuevo = Usuario(
-            tipo_documento=tipo_doc,
             documento=documento, 
             nombre=nombre_completo, 
-            telefono=telefono, 
+            telefono=telefono,
+            direccion=domicilio, 
+            departamento=departamento,
+            provincia=provincia,
+            distrito=distrito,
             correo=correo, 
-            clave=pw_hash
+            clave=pw_hash,
+            id_tipo_documento=id_tipo_documento
         )
         
         db.session.add(nuevo)
@@ -324,10 +331,13 @@ def registro_presencial():
     if request.method == "POST":
 
         documento = request.form["documento"]
-        tipo_doc = request.form.get("tipo_doc", "dni") # Capturamos el tipo de documento
+        tipo_doc_str = request.form.get("tipo_doc", "dni")
 
-        # LÓGICA DE NOMBRE: RUC = Razón Social | Otros (DNI, CE, Pasaporte) = Nombres + Apellidos
-        if tipo_doc.lower() == "ruc":
+        # BUSCAR EL ID NUMÉRICO EN LA BD
+        tipo_doc_obj = TipoDocumento.query.filter(TipoDocumento.nombre.ilike(tipo_doc_str)).first()
+        id_tipo_documento = tipo_doc_obj.id if tipo_doc_obj else 1
+
+        if tipo_doc_str.lower() == "ruc":
             nombre_completo = request.form.get("razon_social", "")
         else:
             nombres = request.form.get("nombres", "")
@@ -337,13 +347,14 @@ def registro_presencial():
 
         telefono = request.form["telefono"]
         correo = request.form["correo"]
+        domicilio = request.form.get("domicilio", "")
+        
+        departamento = request.form.get("departamento")
+        provincia = request.form.get("provincia")
+        distrito = request.form.get("distrito")
 
-        # CONTRASEÑA OPCIONAL
         clave = request.form.get("clave")
 
-        # ==========================================
-        # VALIDACIONES ESTRICTAS DE FORMATO
-        # ==========================================
         if not re.match(r'^\d{9}$', telefono):
             flash("El número de celular debe tener exactamente 9 dígitos numéricos.", "danger")
             return redirect(url_for("registro_presencial"))
@@ -352,7 +363,6 @@ def registro_presencial():
             flash("El formato del correo electrónico no es válido.", "danger")
             return redirect(url_for("registro_presencial"))
 
-        # VALIDAR DUPLICADOS
         existe_correo = Usuario.query.filter_by(correo=correo).first()
         existe_documento = Usuario.query.filter_by(documento=documento).first()
 
@@ -360,21 +370,22 @@ def registro_presencial():
             flash("El correo o documento ya están registrados.", "danger")
             return redirect(url_for("registro_presencial"))
 
-        # SI NO ESCRIBE CONTRASEÑA
         if not clave or clave.strip() == "":
             clave = documento
 
-        # GENERAR HASH
         pw_hash = bcrypt.generate_password_hash(clave).decode('utf-8')
 
-        # CREAR USUARIO CON TIPO DE DOCUMENTO
         nuevo = Usuario(
-            tipo_documento=tipo_doc,
             documento=documento,
             nombre=nombre_completo,
             telefono=telefono,
+            direccion=domicilio,
+            departamento=departamento,
+            provincia=provincia,
+            distrito=distrito,
             correo=correo,
-            clave=pw_hash
+            clave=pw_hash,
+            id_tipo_documento=id_tipo_documento
         )
 
         db.session.add(nuevo)
@@ -1113,36 +1124,47 @@ def nosotros():
 
 ##################################################################
 @app.route('/admin/nuevo_usuario_sistema', methods=['GET', 'POST'])
+@login_required
+@admin_required
 def admin_nuevo_usuario_sistema():
-    # Proteger la ruta: Solo administradores logueados pueden entrar
-    if 'admin_id' not in session or session.get('admin_rol') != 'Administrador':
-        flash('Acceso denegado. Se requieren permisos de Administrador principal.', 'danger')
-        return redirect(url_for('admin_login'))
+    conn = get_connection()
+    cursor = conn.cursor()
 
     if request.method == 'POST':
-        nombre_completo = request.form['nombre_completo']
+        nombres = request.form['nombre_completo']
+        id_tipo_doc = request.form.get('id_tipo_documento')
+        documento = request.form.get('documento')
         correo = request.form['correo']
+        telefono = request.form.get('telefono', '')
+        direccion = request.form.get('direccion', '')
         password = request.form['password']
-        rol = request.form['rol']
-        estado = request.form['estado']
+        rol = request.form['rol'].lower()  # Se convierte a minúsculas para cumplir el CHECK de BD ('administrador', 'asistente', 'consultor')
+        estado = request.form.get('estado', 'Activo')
         
-        hashed_password = generate_password_hash(password)
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
         
-        cursor = db.cursor()
         sql = """INSERT INTO usuarios_sistema 
-                 (nombre_completo, correo, password, rol, estado) 
-                 VALUES (%s, %s, %s, %s, %s)"""
-        valores = (nombre_completo, correo, hashed_password, rol, estado)
+                 (nombres, correo, clave, rol, estado, id_tipo_documento, documento, telefono, direccion) 
+                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+        valores = (nombres, correo, hashed_password, rol, estado, id_tipo_doc, documento, telefono, direccion)
         
         try:
             cursor.execute(sql, valores)
-            db.commit()
-            flash('Usuario del sistema registrado correctamente.', 'success')
-            return redirect(url_for('admin_usuarios_sistema')) # Asumiendo que tienes una vista que los lista
+            conn.commit()
+            flash('Personal del sistema registrado correctamente.', 'success')
+            return redirect('/pedidos')
         except Exception as e:
+            conn.rollback()
             flash(f'Error al registrar el usuario: {str(e)}', 'danger')
-            
-    return render_template('admin/nuevo_usuario_sistema.html')
+        finally:
+            conn.close()
+
+    # Si es GET, consultamos los tipos de documento activos para el selector
+    cursor.execute("SELECT id, nombre FROM tipo_documento WHERE estado = 'Activo'")
+    tipos_doc = cursor.fetchall()
+    conn.close()
+
+    return render_template('admin/nuevo_usuario_sistema.html', tipos_doc=tipos_doc)
 ############################################################################
 
 @app.route('/api/consultar')

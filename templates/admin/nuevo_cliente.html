@@ -28,105 +28,80 @@
 
                         <!-- CAMPOS PERSONA NATURAL (DNI, CE, PASAPORTE, OTRO) -->
                         <div id="campos_dni">
-
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Nombres</label>
-                                <input
-                                    type="text"
-                                    name="nombres"
-                                    id="nombres"
-                                    class="form-control bg-light"
-                                    required
-                                    readonly
-                                >
+                                <input type="text" name="nombres" id="nombres" class="form-control bg-light" required readonly>
                             </div>
 
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">A. Paterno</label>
-                                    <input
-                                        type="text"
-                                        name="apellido_paterno"
-                                        id="apellido_paterno"
-                                        class="form-control bg-light"
-                                        required
-                                        readonly
-                                    >
+                                    <input type="text" name="apellido_paterno" id="apellido_paterno" class="form-control bg-light" required readonly>
                                 </div>
-
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">A. Materno</label>
-                                    <input
-                                        type="text"
-                                        name="apellido_materno"
-                                        id="apellido_materno"
-                                        class="form-control bg-light"
-                                        required
-                                        readonly
-                                    >
+                                    <input type="text" name="apellido_materno" id="apellido_materno" class="form-control bg-light" required readonly>
                                 </div>
                             </div>
-
                         </div>
 
                         <!-- CAMPOS EMPRESA (RUC) -->
                         <div id="campos_ruc" style="display:none;">
-
                             <div class="mb-3 mt-3">
                                 <label class="form-label fw-bold">Razón Social</label>
-                                <input
-                                    type="text"
-                                    name="razon_social"
-                                    id="razon_social"
-                                    class="form-control bg-light"
-                                    readonly
-                                >
+                                <input type="text" name="razon_social" id="razon_social" class="form-control bg-light" readonly>
                             </div>
-
                         </div>
 
                         <hr class="my-4">
 
-                        <!-- CORREO -->
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Correo Electrónico</label>
-                            <input
-                                type="email"
-                                name="correo"
-                                class="form-control"
-                                placeholder="cliente@correo.com"
-                                required
-                            >
-                            <div class="form-text">
-                                Se usará para enviar sus comprobantes.
+                        <!-- CORREO Y TELEFONO -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Correo Electrónico</label>
+                                <input type="email" name="correo" class="form-control" placeholder="cliente@correo.com" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Teléfono / Celular</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">+51</span>
+                                    <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="999 888 777" required>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- TELEFONO -->
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">Teléfono / Celular</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-light">+51</span>
-                                <input
-                                    type="tel"
-                                    class="form-control"
-                                    id="telefono"
-                                    name="telefono"
-                                    placeholder="999 888 777"
-                                    required
-                                >
+                        <!-- UBICACIÓN: DEPARTAMENTO, PROVINCIA Y DISTRITO -->
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label for="departamento" class="form-label fw-bold">Departamento</label>
+                                <select id="departamento" name="departamento" class="form-select" required>
+                                    <option value="">Seleccione...</option>
+                                </select>
                             </div>
+                            <div class="col-md-4">
+                                <label for="provincia" class="form-label fw-bold">Provincia</label>
+                                <select id="provincia" name="provincia" class="form-select" required disabled>
+                                    <option value="">Seleccione...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="distrito" class="form-label fw-bold">Distrito</label>
+                                <select id="distrito" name="distrito" class="form-select" required disabled>
+                                    <option value="">Seleccione...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- DIRECCIÓN / DOMICILIO -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Domicilio / Dirección (Calle, Av., Jr., N°)</label>
+                            <input type="text" class="form-control" id="domicilio" name="domicilio" placeholder="Ej. Av. Los Pinos 123, Urb. El Sol" required>
                         </div>
 
                         <!-- CONTRASEÑA OPCIONAL -->
                         <div class="mb-4">
                             <label class="form-label fw-bold">Contraseña (Opcional)</label>
-                            <input
-                                type="password"
-                                name="clave"
-                                class="form-control"
-                                placeholder="Opcional para registro presencial"
-                            >
+                            <input type="password" name="clave" class="form-control" placeholder="Opcional (por defecto será su documento)">
                         </div>
 
                         <!-- BOTONES -->
@@ -146,48 +121,125 @@
     </div>
 </div>
 
-<!-- LÓGICA JAVASCRIPT PARA REGISTRO PRESENCIAL -->
+<!-- LÓGICA JAVASCRIPT: UBIGEO Y TIPO DE DOCUMENTO -->
 <script>
+// DATOS UBIGEO PERÚ
+const ubigeoPeru = {
+    "LIMA": {
+        "LIMA": ["LIMA", "ANCÓN", "ATE", "BARRANCO", "BREÑA", "CARABAYLLO", "CHACLACAYO", "CHORRILLOS", "CIENEGUILLA", "COMAS", "EL AGUSTINO", "INDEPENDENCIA", "JESÚS MARÍA", "LA MOLINA", "LA VICTORIA", "LINCE", "LOS OLIVOS", "LURIGANCHO", "LURÍN", "MAGDALENA DEL MAR", "MIRAFLORES", "PACHACÁMAC", "PUCUSANA", "PUEBLO LIBRE", "PUENTE PIEDRA", "PUNTA HERMOSA", "PUNTA NEGRA", "RÍMAC", "SAN BARTOLO", "SAN BORJA", "SAN ISIDRO", "SAN JUAN DE LURIGANCHO", "SAN JUAN DE MIRAFLORES", "SAN LUIS", "SAN MARTÍN DE PORRES", "SAN MIGUEL", "SANTA ANITA", "SANTA MARÍA DEL MAR", "SANTA ROSA", "SANTIAGO DE SURCO", "SURQUILLO", "VILLA EL SALVADOR", "VILLA MARÍA DEL TRIUNFO"],
+        "CALLAO": ["CALLAO", "BELLAVISTA", "CARMEN DE LA LEGUA", "LA PERLA", "LA PUNTA", "VENTANILLA", "MI PERÚ"],
+        "CAÑETE": ["SAN VICENTE DE CAÑETE", "ASIA", "CALANGO", "CERRO AZUL", "COAYLLO", "IMPERIAL", "LUNAHUANÁ", "MALA", "NUEVO IMPERIAL", "PACARÁN", "QUILMANÁ", "SAN ANTONIO", "SAN LUIS", "SANTA CRUZ DE FLORES", "ZÚÑIGA"],
+        "HUARAL": ["HUARAL", "ATAVILLOS ALTO", "ATAVILLOS BAJO", "ACOS", "CHANCAY", "LUMPIAN", "PACARAOS", "SANTA CRUZ DE ANDAMARCA", "SUMBILCA", "VEINTINUEVE DE NOVIEMBRE"]
+    },
+    "AREQUIPA": {
+        "AREQUIPA": ["AREQUIPA", "ALTO SELVA ALEGRE", "CAYMA", "CERRO COLORADO", "CHARACATO", "CHIGUATA", "JACOBO HUNTER", "LA JOYA", "MARIANO MELGAR", "MIRAFLORES", "PAVIPATA", "PAUCARPATA", "SABANDÍA", "SACHACA", "SAN ANTONIO DE CHUCA", "SAN JUAN DE SIGUAS", "SAN JUAN DE TARUCANI", "SANTA ISABEL DE SIGUAS", "SANTA RITA DE SIGUAS", "SOCABAYA", "TIABAYA", "UCHUMAYO", "VÍCTOR LARCO", "YANAHUARA", "YARABAMBA", "YURA"],
+        "CAMANÁ": ["CAMANÁ", "JOSÉ MARÍA QUIMPER", "MARIANO NICOLÁS VALCÁRCEL", "MARISCAL CÁCERES", "NICOLÁS DE PIÉROLA", "OCOÑA", "QUILCA", "SAMUEL PASTOR"],
+        "ISLAY": ["MOLLENDO", "COCACHACRA", "DEAN VALDIVIA", "ISLAY", "MEJÍA", "PUNTA DE BOMBÓN"]
+    },
+    "LA LIBERTAD": {
+        "TRUJILLO": ["TRUJILLO", "EL PORVENIR", "FLORENCIA DE MORA", "GUADALUPE", "HUANCHACO", "LA ESPERANZA", "LAREDO", "MOCHE", "OTUZCO", "SALAVERRY", "SIMBAL", "VÍCTOR LARCO HERRERA"]
+    },
+    "PIURA": {
+        "PIURA": ["PIURA", "CASTILLA", "CATACAOS", "CURA MORI", "EL TALLÁN", "LA ARENA", "LA UNIÓN", "LAS LOMAS", "TAMBO GRANDE"],
+        "SULLANA": ["SULLANA", "BELLAVISTA", "IGNACIO ESCUDERO", "LANCONES", "MARCAVELICA", "QUERECOTILLO", "SALITRAL"]
+    },
+    "LAMBAYEQUE": {
+        "CHICLAYO": ["CHICLAYO", "CHONGOYAPE", "ETEN", "ETEN PUERTO", "JOSÉ LEONARDO ORTIZ", "LA VICTORIA", "LAGUNAS", "MONSEFÚ", "NUEVA ARICA", "OYOTÚN", "PATAPO", "PICSI", "PIMENTEL", "POSOPE ALTO", "REQUE", "SANTA ROSA", "SAÑA", "TUMÁN"]
+    },
+    "CUSCO": {
+        "CUSCO": ["CUSCO", "CCORCA", "POROY", "SAN JERÓNIMO", "SAN SEBASTIÁN", "SANTIAGO", "SAYLLA", "WANCHAQ"]
+    },
+    "JUNIN": {
+        "HUANCAYO": ["HUANCAYO", "CARHUACALLANGA", "CHACAPAMPA", "CHICCHE", "CHILCA", "CHONGOS ALTO", "CHUPURO", "EL TAVO", "HUANCÁN", "HUASICANCHA", "HUAYUCACHI", "INGENIO", "PARIAHUANCA", "PILCOMAYO", "PUCARÁ", "QUICHUAY", "QUILCAS", "SAN AGUSTÍN", "SAN JERÓNIMO DE TUNÁN", "SAÑO", "SAPALLANGA", "SICAYA", "SANTO DOMINGO DE ACOBAMBA", "VIQUES"]
+    },
+    "ANCASH": {
+        "SANTA": ["CHIMBOTE", "CÁCERES DEL PERÚ", "COISHCO", "NEPEÑA", "MACATE", "MORO", "NUEVO CHIMBOTE", "SAMANCO", "SANTA"],
+        "HUARAZ": ["HUARAZ", "INDEPENDENCIA", "COCHABAMBA", "COLCABAMBA", "JANGAS", "LA LIBERTAD", "OLLEROS", "PAMPAS", "PIRA", "TARICA"]
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function() {
+    const selectDep = document.getElementById('departamento');
+    const selectProv = document.getElementById('provincia');
+    const selectDist = document.getElementById('distrito');
+
+    // 1. Cargar Departamentos
+    for (let dep in ubigeoPeru) {
+        let opt = document.createElement('option');
+        opt.value = dep;
+        opt.textContent = dep;
+        selectDep.appendChild(opt);
+    }
+
+    // 2. Cambio en Departamento
+    selectDep.addEventListener('change', function() {
+        selectProv.innerHTML = '<option value="">Seleccione...</option>';
+        selectDist.innerHTML = '<option value="">Seleccione...</option>';
+        selectProv.disabled = true;
+        selectDist.disabled = true;
+
+        const depSel = this.value;
+        if (depSel && ubigeoPeru[depSel]) {
+            for (let prov in ubigeoPeru[depSel]) {
+                let opt = document.createElement('option');
+                opt.value = prov;
+                opt.textContent = prov;
+                selectProv.appendChild(opt);
+            }
+            selectProv.disabled = false;
+        }
+    });
+
+    // 3. Cambio en Provincia
+    selectProv.addEventListener('change', function() {
+        selectDist.innerHTML = '<option value="">Seleccione...</option>';
+        selectDist.disabled = true;
+
+        const depSel = selectDep.value;
+        const provSel = this.value;
+
+        if (depSel && provSel && ubigeoPeru[depSel][provSel]) {
+            ubigeoPeru[depSel][provSel].forEach(function(dist) {
+                let opt = document.createElement('option');
+                opt.value = dist;
+                opt.textContent = dist;
+                selectDist.appendChild(opt);
+            });
+            selectDist.disabled = false;
+        }
+    });
+
+    // 4. Lógica para alternar tipos de documento
     const selectTipoDoc = document.getElementById('tipo_doc') || document.querySelector('select[name="tipo_doc"]');
-    
     if (selectTipoDoc) {
         selectTipoDoc.addEventListener('change', actualizarFormularioPresencial);
-        actualizarFormularioPresencial(); // Ejecución inicial al cargar la página
+        actualizarFormularioPresencial();
     }
 
     function actualizarFormularioPresencial() {
         const valorTipo = selectTipoDoc ? selectTipoDoc.value.toLowerCase() : 'dni';
-        
         const divDni = document.getElementById('campos_dni');
         const divRuc = document.getElementById('campos_ruc');
         const inputsDni = divDni.querySelectorAll('input');
         const inputRuc = document.getElementById('razon_social');
 
         if (valorTipo === 'ruc') {
-            // Caso RUC: Mostrar Razón Social y remover campos requeridos de DNI
             divDni.style.display = 'none';
             divRuc.style.display = 'block';
-            
             inputsDni.forEach(i => i.removeAttribute('required'));
             if (inputRuc) inputRuc.setAttribute('required', 'required');
-
         } else {
-            // Caso Persona Natural (DNI, CE, Pasaporte, Otro)
             divDni.style.display = 'block';
             divRuc.style.display = 'none';
-            
             inputsDni.forEach(i => i.setAttribute('required', 'required'));
             if (inputRuc) inputRuc.removeAttribute('required');
 
-            // Habilitar edición manual si el documento es internacional/manual
             const esManual = (valorTipo === 'ce' || valorTipo === 'pasaporte' || valorTipo === 'otro');
             inputsDni.forEach(i => {
                 if (esManual) {
                     i.removeAttribute('readonly');
                     i.classList.remove('bg-light');
                 } else {
-                    // Si vuelve a ser DNI se bloquea para autocompletado por API
                     i.setAttribute('readonly', 'readonly');
                     i.classList.add('bg-light');
                 }
@@ -195,6 +247,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+// Función global invocable desde Decolecta para seleccionar la ubicación devuelta por la API
+function seleccionarUbigeo(dep, prov, dist) {
+    const selectDep = document.getElementById('departamento');
+    const selectProv = document.getElementById('provincia');
+    const selectDist = document.getElementById('distrito');
+
+    if (!dep) return;
+    
+    selectDep.value = dep.toUpperCase();
+    selectDep.dispatchEvent(new Event('change'));
+
+    if (prov) {
+        selectProv.value = prov.toUpperCase();
+        selectProv.dispatchEvent(new Event('change'));
+    }
+
+    if (dist) {
+        selectDist.value = dist.toUpperCase();
+    }
+}
 </script>
 
 {% endblock %}

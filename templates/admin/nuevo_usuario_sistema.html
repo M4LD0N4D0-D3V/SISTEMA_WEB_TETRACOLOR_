@@ -1,52 +1,106 @@
-{% extends 'admin_base.html' %}
+{% extends 'base.html' %}
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow">
-        <div class="card-header bg-dark text-white">
-            <h4 class="mb-0">Registrar Nuevo Usuario del Sistema (Personal)</h4>
-        </div>
-        <div class="card-body">
-            <form method="POST" action="{{ url_for('admin_nuevo_usuario_sistema') }}">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="nombre_completo">Nombre Completo</label>
-                        <input type="text" class="form-control" name="nombre_completo" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="correo">Correo Electrónico (Usuario)</label>
-                        <input type="email" class="form-control" name="correo" required>
-                    </div>
-                </div>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-lg border-0 rounded-4">
                 
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label for="password">Contraseña Provisional</label>
-                        <input type="password" class="form-control" name="password" required>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="rol">Rol en el Sistema</label>
-                        <select class="form-control" name="rol" required>
-                            <option value="">Seleccione un rol...</option>
-                            <option value="Administrador">Administrador</option>
-                            <option value="Vendedor">Vendedor</option>
-                            <option value="Diseñador">Diseñador</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="estado">Estado de la cuenta</label>
-                        <select class="form-control" name="estado" required>
-                            <option value="Activo">Activo</option>
-                            <option value="Inactivo">Inactivo</option>
-                        </select>
-                    </div>
+                <!-- ENCABEZADO -->
+                <div class="card-header bg-dark text-white p-4">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-plus-fill me-2 text-info"></i>
+                        Registrar Personal del Sistema
+                    </h4>
+                    <p class="small opacity-75 mb-0">
+                        Crea una nueva cuenta con perfil administrativo para el personal.
+                    </p>
                 </div>
 
-                <div class="mt-3">
-                    <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Registrar Empleado</button>
-                    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancelar</a>
+                <!-- FORMULARIO -->
+                <div class="card-body p-4">
+                    <form action="/admin/nuevo_usuario_sistema" method="POST">
+                        
+                        <!-- NOMBRE COMPLETO -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nombres y Apellidos</label>
+                            <input type="text" name="nombre_completo" class="form-control" placeholder="Ej. Juan Pérez" required>
+                        </div>
+
+                        <!-- DOCUMENTO DE IDENTIDAD -->
+                        <div class="row mb-3">
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold">Tipo Doc.</label>
+                                <select name="id_tipo_documento" class="form-select" required>
+                                    <option value="" disabled selected>Seleccione...</option>
+                                    {% for doc in tipos_doc %}
+                                        <option value="{{ doc[0] }}">{{ doc[1] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold">Número de Documento</label>
+                                <input type="text" name="documento" class="form-control" placeholder="Ej. 72635418" required>
+                            </div>
+                        </div>
+
+                        <!-- CONTACTO -->
+                        <div class="row mb-3">
+                            <div class="col-md-7">
+                                <label class="form-label fw-bold">Correo Electrónico</label>
+                                <input type="email" name="correo" class="form-control" placeholder="personal@tetracolor.com" required>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label fw-bold">Teléfono / Celular</label>
+                                <input type="tel" name="telefono" class="form-control" placeholder="Ej. 987654321">
+                            </div>
+                        </div>
+
+                        <!-- DOMICILIO -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Domicilio / Dirección</label>
+                            <input type="text" name="direccion" class="form-control" placeholder="Ej. Av. Los Olivos 456, Lima">
+                        </div>
+
+                        <!-- ROL Y ESTADO -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Rol</label>
+                                <select name="rol" class="form-select" required>
+                                    <option value="administrador">Administrador</option>
+                                    <option value="asistente">Asistente</option>
+                                    <option value="consultor">Consultor</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Estado</label>
+                                <select name="estado" class="form-select" required>
+                                    <option value="Activo">Activo</option>
+                                    <option value="Inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- CONTRASEÑA -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Contraseña de Acceso</label>
+                            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                        </div>
+
+                        <!-- BOTONES DE ACCIÓN -->
+                        <div class="d-flex justify-content-between pt-2">
+                            <a href="/pedidos" class="btn btn-outline-secondary px-4">Cancelar</a>
+                            <button type="submit" class="btn btn-success px-4">
+                                <i class="bi bi-check-lg me-1"></i> Guardar Personal
+                            </button>
+                        </div>
+
+                    </form>
                 </div>
-            </form>
+
+            </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
