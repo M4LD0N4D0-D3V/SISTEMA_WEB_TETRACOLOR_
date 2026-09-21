@@ -115,6 +115,7 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 # Crear la carpeta si no existe
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -637,10 +638,7 @@ def ver_detalle_pedido(id):
     # Enviamos pedido, pagos y mensajes al HTML
     return render_template('pedido_detalle.html', pedido=pedido, pagos=pagos, mensajes=mensajes)
 ######################
-# Crear la carpeta static/uploads si no existe
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER######################
+
 
 @app.route('/mis_pedidos')
 @login_required
