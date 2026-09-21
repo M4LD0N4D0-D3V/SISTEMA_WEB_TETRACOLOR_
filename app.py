@@ -1107,6 +1107,43 @@ def enviar_mensaje_pedido(pedido_id):
     return redirect(request.referrer)
 
 ####################################################################
+@app.route('/nosotros')
+def nosotros():
+    return render_template('nosotros.html')
+
+##################################################################
+@app.route('/admin/nuevo_usuario_sistema', methods=['GET', 'POST'])
+def admin_nuevo_usuario_sistema():
+    # Proteger la ruta: Solo administradores logueados pueden entrar
+    if 'admin_id' not in session or session.get('admin_rol') != 'Administrador':
+        flash('Acceso denegado. Se requieren permisos de Administrador principal.', 'danger')
+        return redirect(url_for('admin_login'))
+
+    if request.method == 'POST':
+        nombre_completo = request.form['nombre_completo']
+        correo = request.form['correo']
+        password = request.form['password']
+        rol = request.form['rol']
+        estado = request.form['estado']
+        
+        hashed_password = generate_password_hash(password)
+        
+        cursor = db.cursor()
+        sql = """INSERT INTO usuarios_sistema 
+                 (nombre_completo, correo, password, rol, estado) 
+                 VALUES (%s, %s, %s, %s, %s)"""
+        valores = (nombre_completo, correo, hashed_password, rol, estado)
+        
+        try:
+            cursor.execute(sql, valores)
+            db.commit()
+            flash('Usuario del sistema registrado correctamente.', 'success')
+            return redirect(url_for('admin_usuarios_sistema')) # Asumiendo que tienes una vista que los lista
+        except Exception as e:
+            flash(f'Error al registrar el usuario: {str(e)}', 'danger')
+            
+    return render_template('admin/nuevo_usuario_sistema.html')
+############################################################################
 
 @app.route('/api/consultar')
 def consultar_api():
